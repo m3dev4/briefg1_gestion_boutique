@@ -1,188 +1,92 @@
 import mysql.connector
-connection=mysql.connector.connect(
-    host='localhost',
-    user='admin',
-    password='admin123',
-    database='gestion_stock'
+import bcrypt
+
+connection = mysql.connector.connect(
+    host="localhost", user="root", password="", database="gestion_stock"
 )
-if connection.is_connected():
-    print("Connexion établie avec succes!")
-curseur=connection.cursor()
+curseur = connection.cursor()
+
 
 def ajouter_categories():
-   while True:
-     
-     
-     categorie=input("saisir le nom  du produit a mettre a jour: ").strip().capitalize()
-     if categorie.replace(" ", "").isalpha():
-       break  
-     else:
-         print("type non validé ")
-     
-     sql="""INSERT INTO Categories(categorie_nom) values(%s)
-        """
-     valeurs=(categorie,)
-     curseur.execute(sql,valeurs)
-     connection.commit()
-     break
-#ajouter_categories()   
+    categorie = input("Saisir une categories : ")
+    sql = """INSERT INTO Categories(categorie_nom) values(%s)"""
+    valeurs = (categorie,)
+    curseur.execute(sql, valeurs)
+    connection.commit()
+
+
 def ajouter_produit():
- while True:
     print("voici les categories disponibles")
-    sql="""SELECT * FROM Categories"""
+    sql = """SELECT * FROM Categories"""
     curseur.execute(sql)
-    affichage=curseur.fetchall()
+    affichage = curseur.fetchall()
     for c in affichage:
         print(c)
-    
-    
-    
-   
-    id_categorie=input("saisir l'id de la categorie")
-    if id_categorie.isnumeric():
-       id_categorie=id_categorie
-       
- 
-    else:
-        print("saisir des elements de ype numerique pour les id")
-      
-    sql_verif="""SELECT * FROM produits where id_produit=%s"""
-    curseur.execute(sql_verif,(id_categorie,))
-    p=curseur.fetchone()
-    if not p:
-        print("id du categorie non trouve")
-        break
-        
-    nom_produit=input("saisir le nom du produit: ").capitalize()
-    if nom_produit.isalpha():
-       nom_produit=nom_produit
-      
-    else:
-        print("le nom doit etre composé que des lettres alphabétiques")
-    
-    prix=input("saisir le prix du produit: ")
-    if prix.isnumeric():
-        prix=prix
-        
-    else:
-        print("le prix doit etre un nombre entier")
-    qtite_initiale=input("saisir la quantitee: ")
-    if qtite_initiale.isnumeric():
-        qtite_initiale=qtite_initiale
-       
-    else:
-        print("saisir que des nobres pour les quantites")
-    sql_produit="""INSERT INTO produits(id_categorie,nom_produit,prix,quantité_initiale) values(%s,%s,%s,%s)"""
-    valeurs=(id_categorie,nom_produit,prix,qtite_initiale)
-    curseur.execute(sql_produit,valeurs)
+
+    id_categorie = input("saisir l'id de la categorie")
+    nom_produit = input("saisir le nom du produit: ")
+    prix = input("saisir le prix du produit: ")
+    qtite_initiale = input("saisir la quantitee: ")
+    sql_produit = """INSERT INTO produits(id_categorie,nom_produit,prix,quantité_initiale) values(%s,%s,%s,%s)"""
+    valeurs = (id_categorie, nom_produit, prix, qtite_initiale)
+    curseur.execute(sql_produit, valeurs)
     connection.commit()
-    break
-#ajouter_produit()   
+
 
 def affichage_produits():
-    sql="""SELECT produits.nom_produit,produits.prix,produits.quantité_initiale,Categories.categorie_nom 
+    sql = """SELECT produits.nom_produit,produits.prix,produits.quantité_initiale,Categories.categorie_nom 
     FROM produits 
     join Categories on Categories.id_categorie=produits.id_categorie
-    WHERE produits.quantité_initiale>0""" 
-    curseur.execute(sql)  
-    affichage=curseur.fetchall()
-    for nom_produit,prix,quantité_initiale,categorie_nom in affichage:
-        print(f"nom_produit: {nom_produit:<5}  prix: {prix:<15}  quantité_initiale: {quantité_initiale:<5}  categorie_nom : {categorie_nom :<5}")
-        break
-affichage_produits()
-def mise_a_jour():
-    
- while True:
-    nom_produit=input("saisir le nom  du produit a mettre a jour: ").strip().capitalize()
-    if nom_produit.replace(" ", "").isalpha():
-       break  
+    WHERE produits.quantité_initiale>0"""
+    curseur.execute(sql)
+    affichage = curseur.fetchall()
+    for p in affichage:
+        print(p)
 
-       
-    else:
-        print("le nom d un produit doit etre compose que des lettres alphabetiques")
-    nouvelle_qtité=input("saisir la nouvelle quantité: ").strip()
-    if nouvelle_qtité.isnumeric():
-       nouvelle_qtité=int(nouvelle_qtité)
-       break
-    else:
-        print("quantite doit etre de type entier")
+
+def mise_a_jour():
+    nom_produit = input("saisir le nom  du produit a mettre a jour: ")
+    nouvelle_qtité = input("saisir la nouvelle quantité: ")
     sql = """
     UPDATE produits p
     JOIN Categories c ON p.id_categorie = c.id_categorie
     SET p.quantité_initiale = %s
     WHERE p.nom_produit  = %s
-   
     """
-
-    valeurs = (nouvelle_qtité,nom_produit)
-    curseur.execute(sql,valeurs)
+    valeurs = (nouvelle_qtité, nom_produit)
+    curseur.execute(sql, valeurs)
     connection.commit()
-    curseur.close()
     print("Mise à jour effectuée.")
-    break
-#mise_a_jour()
+
+
 def Rechercher_produit():
- while True:
-    id_produit=input("choisir l'id du produit à rechercher: ").capitalize()
-    
-    sql="""SELECT produits.prix,produits.quantité_initiale,produits.nom_produit,Categories.categorie_nom 
-    
+    nom = input("choisir le nom du produit a rechercher: ")
+    sql = """SELECT produits.prix,produits.quantité_initiale,produits.nom_produit,Categories.categorie_nom 
     FROM produits 
     join Categories on Categories.id_categorie=produits.id_categorie
-    where   produits.id_produit=%s"""
-    curseur.execute(sql,(id_produit,))
-    affichage=curseur.fetchall()
-    for prix,quantité_initiale,nom_produit,categorie_nom in affichage:
-        print(f"prix: {prix:<15} quantité_initiale: {quantité_initiale:<5} nom_produit: {nom_produit:<5} categorie_nom : {categorie_nom :<5}")
-        break
-#Rechercher_produit()   
-
-
-def Supprimer_produit(): #faire un select pour savoir si l id existe ou non,utiliser try except
- while True:
-    identifiant=input("saisir l'id du produit a supprimer: ")
-    if identifiant.isnumeric():
-       identifiant=identifiant
-       
-    else:
-        print("type non valide")
-    sql_verif="""SELECT * FROM produits where id_produit=%s"""
-    curseur.execute(sql_verif,(identifiant,))
-    p=curseur.fetchone()
-    if not p:
-        print("id du produit non trouve")
-        return
-    
-    sql=""" delete from produits where id_produit=%s """
-    curseur.execute(sql,(identifiant,))
-    connection.commit()
-    
-    print(f"produit supprimer avec sucess ")
-    break 
-#Supprimer_produit()    
-def Supprimer_categorie():
-  while True:
-    identifiant=input("saisir l'id du categorie a supprimer: ")
-    if identifiant.isnumeric():
-       identifiant=int(identifiant)
-       
-    else:
-        print("type non valide")
-    sql_verif="""SELECT * FROM Categories where id_categorie=%s"""
-    curseur.execute(sql_verif,(identifiant,))
-    p=curseur.fetchone()
-    if not p:
-        print("id du produit non trouve")
-        return
-    sql=""" delete from Categories where id_categorie=%s"""
-    curseur.execute(sql,(identifiant,))
-    connection.commit()
-    
-    affichage=curseur.fetchone()
+    where produits.nom_produit=%s"""
+    curseur.execute(sql, (nom,))
+    affichage = curseur.fetchone()
     if affichage:
-        print(f"categorie supprimer avec sucess : {affichage}")
-        break
-#Supprimer_produit()    
+        print(f"produit retrouvé : {affichage}")
+    else:
+        print("Produit non trouvé.")
+
+
+def Supprimer_produit():
+    identifiant = input("saisir l'id du produit a supprimer: ")
+    sql = """delete from produits where id_produit=%s"""
+    curseur.execute(sql, (identifiant,))
+    connection.commit()
+    print(f"Produit supprimé avec succès.")
+
+
+def Supprimer_categorie():
+    identifiant = input("saisir l'id du categorie a supprimer: ")
+    sql = """delete from Categories where id_categorie=%s"""
+    curseur.execute(sql, (identifiant,))
+    connection.commit()
+    print(f"Catégorie supprimée avec succès.")
 
 
 def Dashboard():
@@ -195,7 +99,7 @@ def Dashboard():
 
         choix = input("Saisir votre choix : ")
 
-        if choix == '1':
+        if choix == "1":
             sql = """
             SELECT c.categorie_nom,p.nom_produit,p.prix
             FROM produits p
@@ -205,9 +109,9 @@ def Dashboard():
             """
             curseur.execute(sql)
             resultat = curseur.fetchone()
-            print("voici le produit le produit le plus cher",resultat)
+            print("voici le produit le plus cher :", resultat)
 
-        elif choix == '2':
+        elif choix == "2":
             sql = """
             SELECT SUM(prix * quantité_initiale)
             FROM produits
@@ -216,7 +120,7 @@ def Dashboard():
             resultat = curseur.fetchone()
             print("Valeur totale du stock :", resultat)
 
-        elif choix == '3':
+        elif choix == "3":
             sql = """
             SELECT c.categorie_nom, COUNT(*)
             FROM produits p
@@ -228,131 +132,146 @@ def Dashboard():
             for ligne in resultat:
                 print(ligne)
 
-        elif choix == '4':
+        elif choix == "4":
             break
 
         else:
             print("Choix invalide")
 
-#Dashboard()  
 
-
-#Ajout utilisateur
-def creer_utilisateur():
-    mail = input("Nom d'utilisateur : ")
-    mot_passe = input("Mot de passe : ")
-    role_utilisateur = input("Rôle (admin/employe) : ")
-
-    sql = """
-    INSERT INTO utilisateurs(mail, mot_passe, role_utilisateur)
-    VALUES (%s, %s, %s)
-    """
-
-    curseur.execute(sql, (mail, mot_passe, role_utilisateur))
-    connection.commit()
-
-    print("Utilisateur enregistré")
-
-
-
-#auth
 def authentification():
-    mail= input("Nom d'utilisateur : ")
-    mot_passe= input("Mot de passe : ")
+    print("Pour continuer, veuillez vous authentifier. 1- S'inscrire 2- Se connecter")
+    while True:
+        autuh_choice = input("Votre choix : ")
+        match autuh_choice:
+            case "1":
+                sign_up()
+            case "2":
+                sign_in()
+            case _:
+                print("Choix invalide")
 
-    sql = """
-    SELECT role_utilisateur
-    FROM utilisateurs
-    WHERE mail=%s AND mot_passe=%s
-    """
 
-    curseur.execute(sql, (mail, mot_passe))
-    resultat = curseur.fetchone()
+def sign_up():
 
-    if resultat:
-         print("Connexion réussie")
-         return resultat
+    email_exist = True
+
+    if email_exist:
+        curseur.execute("SELECT email FROM user")
+        emails = [email[0] for email in curseur.fetchall()]
+
+    while True:
+        email = input("Entrez votre email : ").strip().lower()
+        if email == "" or "@" not in email:
+            print("Email invalide. Veuillez réessayer.")
+            continue
+        if email in emails:
+            print("Email déjà utilisé. Veuillez réessayer.")
+            continue
+        break
+    while True:
+        password = input("Entrez votre mot de passe: ").strip()
+        password_hash = password.encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password_hash, salt)
+
+        if len(password) < 8:
+            print(
+                "Le mot de passe doit contenir au moins 8 caractères. Veuillez réessayer."
+            )
+            continue
+        elif password.isdigit() or password.isalpha():
+            print(
+                "Le mot de passe doit contenir à la fois des lettres et des chiffres. Veuillez réessayer."
+            )
+            continue
+        break
+
+    query = "INSERT INTO user (email, password) VALUES (%s, %s)"
+    values = (email, hashed_password.decode("utf-8"))
+    curseur.execute(query, values)
+    connection.commit()
+    print("Inscription réussie ! Vous pouvez maintenant vous connecter.")
+    sign_in()
+
+
+def sign_in():
+    email_exist = True
+    
+    if email_exist:
+        curseur.execute("SELECT email FROM user")
+        emails = [email[0] for email in curseur.fetchall()]
+        
+    
+    while True:
+        email = input("Entrez votre email : ").strip().lower()
+        if email == "" or "@" not in email:
+            print("Email invalide. Veuillez réessayer.")
+            continue
+        elif email not in emails:
+            print("Email non trouvé. Veuillez réessayer.")
+            continue
+        break
+    while True:
+        password = input("Entrez votre mot de passe : ").strip()
+        if password == "":
+            print("Mot de passe invalide. Veuillez réessayer.")
+            continue
+        break
+    
+    query = "SELECT password FROM user WHERE email = %s"
+    curseur.execute(query, (email,))
+    result = curseur.fetchone()
+    stored_password = result[0].encode("utf-8")
+    if bcrypt.checkpw(password.encode("utf-8"), stored_password):
+        print("Connexion réussie !")
+        menu()
     else:
-
-        print("Identifiants incorrects")
-        return None
-
+        print("Mot de passe incorrect. Veuillez réessayer.")
+        return sign_in()
 
 
-
-  
+def sign_out():
+    print("Déconnexion réussie !")
+    authentification()
 
 def menu():
- while True:
-    print("######  Menu principal  #####")
-    print( "1.Ajouter un produit")
-    print("2.Lister l'inventaire")
-    print( "3.Mettre à jour le stock")
-    print( "4.Rechercher un produit")
-    print( "5.Supprimer un produit")
-    print( "6.Supprimer une categorie")
-    print ("7.Dashboard")
-    print("8.ajouter une categorie")
-    print("9.ajouter un utilisateur")
-    print("10.Quitter le programme")
-    choice=input("faire votre choix")
-    if choice=='1':
-     
-     ajouter_produit()
-    elif choice=='2':
-     affichage_produits()
-    elif choice=='4':
-     Rechercher_produit()
-    elif choice=='5':
-     Supprimer_produit()
-    elif choice=='6':
-        Supprimer_categorie()
-    elif choice=='7':
-     Dashboard()
-    elif choice=='8':
-        ajouter_categories()
-    elif choice=='9':
-        creer_utilisateur()
-    elif choice == '10':
-        print("Merci! à bientot")
-    
-    
-def menu_caissier():
     while True:
-        print("\n=== MENU CAISSIER ===")
-        print("1. Consulter la liste des produits")
-        print("2. Quitter")
-
-        choix = input("Choisir une option : ")
-
-        if choix == "1":
-            affichage_produits()  
-        elif choix == "2":
+        print("######  Menu principal  #####")
+        print("1.Ajouter un produit")
+        print("2.Lister l'inventaire")
+        print("3.Mettre à jour le stock")
+        print("4.Rechercher un produit")
+        print("5.Supprimer un produit")
+        print("6.Supprimer une categorie")
+        print("7.Dashboard")
+        print("8.Deconnexion")
+        print("9.Quitter")
+        choice = input("faire votre choix: ")
+        if choice == "1":
+            ajouter_categories()
+            ajouter_produit()
+        elif choice == "2":
+            affichage_produits()
+        elif choice == "3":
+            mise_a_jour()
+        elif choice == "4":
+            Rechercher_produit()
+        elif choice == "5":
+            Supprimer_produit()
+        elif choice == "6":
+            Supprimer_categorie()
+        elif choice == "7":
+            Dashboard()
+        elif choice == "8":
+            sign_out()
+        elif choice == "9":
+            print("Au revoir !")
             break
         else:
-            print("Option invalide.")
+            print("Choix invalide.")
 
-#menu()   
 
-      
-    
-#menu principal
-
-def menu_principal():
-    while True:
-        print("Bienvenue!")    
-        print("Proccédure d'authenfication") 
-        role_tuple = authentification()  # ('admin',)
-        if role_tuple:
-         role = role_tuple[0] 
-         print("C'est un admin")
-         menu()
-        elif role == "caissier":
-         print("C'est un caissier")
-         menu_caissier()
-        else:
-         print("Connexion échouée ou rôle inconnu")
-#menu_principal()
+authentification()
 curseur.close()
-connection.close()         
-    
+connection.close()
