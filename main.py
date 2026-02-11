@@ -45,6 +45,13 @@ def ajouter_produit():
  
     else:
         print("saisir des elements de ype numerique pour les id")
+      
+    sql_verif="""SELECT * FROM produits where id_produit=%s"""
+    curseur.execute(sql_verif,(id_categorie,))
+    p=curseur.fetchone()
+    if not p:
+        print("id du categorie non trouve")
+        break
         
     nom_produit=input("saisir le nom du produit: ").capitalize()
     if nom_produit.isalpha():
@@ -79,10 +86,10 @@ def affichage_produits():
     WHERE produits.quantité_initiale>0""" 
     curseur.execute(sql)  
     affichage=curseur.fetchall()
-    for p in affichage:
-        print(p)
+    for nom_produit,prix,quantité_initiale,categorie_nom in affichage:
+        print(f"nom_produit: {nom_produit:<5}  prix: {prix:<15}  quantité_initiale: {quantité_initiale:<5}  categorie_nom : {categorie_nom :<5}")
         break
-#affichage_produits()
+affichage_produits()
 def mise_a_jour():
     
  while True:
@@ -116,23 +123,21 @@ def mise_a_jour():
 #mise_a_jour()
 def Rechercher_produit():
  while True:
-    nom=input("choisir le nom du produit a rechercher: ").capitalize()
-    if nom.replace(" ", "").isalpha():
-       break
-       
-    else:
-        print("type non valide")
+    id_produit=input("choisir l'id du produit à rechercher: ").capitalize()
+    
     sql="""SELECT produits.prix,produits.quantité_initiale,produits.nom_produit,Categories.categorie_nom 
     
     FROM produits 
     join Categories on Categories.id_categorie=produits.id_categorie
-    where   produits.nom_produit=%s"""
-    curseur.execute(sql,(nom,))
-    affichage=curseur.fetchone()
-    if affichage:
-        print(f"produit retrouvé : {affichage}")
+    where   produits.id_produit=%s"""
+    curseur.execute(sql,(id_produit,))
+    affichage=curseur.fetchall()
+    for prix,quantité_initiale,nom_produit,categorie_nom in affichage:
+        print(f"prix: {prix:<15} quantité_initiale: {quantité_initiale:<5} nom_produit: {nom_produit:<5} categorie_nom : {categorie_nom :<5}")
         break
 #Rechercher_produit()   
+
+
 def Supprimer_produit(): #faire un select pour savoir si l id existe ou non,utiliser try except
  while True:
     identifiant=input("saisir l'id du produit a supprimer: ")
@@ -347,7 +352,7 @@ def menu_principal():
          menu_caissier()
         else:
          print("Connexion échouée ou rôle inconnu")
-menu_principal()
+#menu_principal()
 curseur.close()
 connection.close()         
     
